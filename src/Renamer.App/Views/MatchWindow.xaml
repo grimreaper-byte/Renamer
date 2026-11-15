@@ -1,0 +1,151 @@
+<Window x:Class="Renamer.App.Views.MatchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Renamer.App.Views"
+        Style="{StaticResource AppWindow}"
+        Title="Change match"
+        Width="700"
+        Height="680"
+        MinWidth="560"
+        MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <views:TitleBar Grid.Row="0" Title="Change match" IsDialog="True" />
+
+        <!-- The file being matched -->
+        <StackPanel Grid.Row="1" Margin="20,8,20,14">
+            <TextBlock Text="{Binding FileName}"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip="{Binding FileName}" />
+            <TextBlock Text="{Binding CurrentProblem}"
+                       Margin="0,4,0,0"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource AppWarning}"
+                       Visibility="{Binding CurrentProblem, Converter={StaticResource VisibleWhen}}" />
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="86" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Padding="2"
+                        CornerRadius="7"
+                        Height="32"
+                        Background="{DynamicResource AppSurfaceRaised}"
+                        BorderBrush="{DynamicResource AppStroke}"
+                        BorderThickness="1"
+                        VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Style="{StaticResource SegmentButton}" Tag="&#xE8B2;" Content="Movie" GroupName="Kind" IsChecked="{Binding IsMovie}" />
+                        <RadioButton Style="{StaticResource SegmentButton}" Tag="&#xE7F4;" Content="TV show" GroupName="Kind" IsChecked="{Binding IsTv}" />
+                    </StackPanel>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <TextBlock Text="Title" Style="{StaticResource FieldLabel}" />
+                    <TextBox x:Name="QueryBox"
+                             AutomationProperties.Name="Title"
+                             Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
+                             KeyDown="OnSearchKeyDown" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                    <TextBlock Text="Year" Style="{StaticResource FieldLabel}" />
+                    <TextBox AutomationProperties.Name="Year"
+                             Text="{Binding YearText, UpdateSourceTrigger=PropertyChanged}"
+                             KeyDown="OnSearchKeyDown" />
+                </StackPanel>
+                <Button Grid.Column="3"
+                        Tag="&#xE721;"
+                        Content="Search"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Bottom"
+                        Command="{Binding SearchCommand}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Results -->
+        <Grid Grid.Row="2" Margin="20,0,12,0">
+            <ListBox Style="{StaticResource ResultList}"
+                     ItemsSource="{Binding Results}"
+                     SelectedItem="{Binding Selected}"
+                     MouseDoubleClick="OnResultDoubleClick">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Overview}"
+                                       Style="{StaticResource Muted}"
+                                       FontSize="12"
+                                       Margin="0,3,0,0"
+                                       MaxHeight="34"
+                                       TextTrimming="WordEllipsis"
+                                       Visibility="{Binding Overview, Converter={StaticResource VisibleWhen}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Text="{Binding SearchMessage}"
+                       Style="{StaticResource Muted}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       Margin="24"
+                       Visibility="{Binding SearchMessage, Converter={StaticResource VisibleWhen}}" />
+        </Grid>
+
+        <!-- Episode numbers -->
+        <StackPanel Grid.Row="3"
+                    Margin="20,10,20,0"
+                    Visibility="{Binding IsTv, Converter={StaticResource VisibleWhen}}">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Width="84">
+                    <TextBlock Text="Season" Style="{StaticResource FieldLabel}" />
+                    <TextBox AutomationProperties.Name="Season" Text="{Binding SeasonText, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Width="84" Margin="8,0,0,0">
+                    <TextBlock Text="Episode" Style="{StaticResource FieldLabel}" />
+                    <TextBox AutomationProperties.Name="Episode" Text="{Binding EpisodeText, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Width="96" Margin="8,0,0,0" ToolTip="For a file holding several episodes: the last episode number.">
+                    <TextBlock Text="Last episode" Style="{StaticResource FieldLabel}" />
+                    <TextBox AutomationProperties.Name="Last episode" Text="{Binding EpisodeEndText, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </StackPanel>
+            <CheckBox Margin="0,12,0,0"
+                      Content="{Binding ApplyToSameShowLabel}"
+                      IsChecked="{Binding ApplyToSameShow}"
+                      Visibility="{Binding ShowApplyToSameShow, Converter={StaticResource VisibleWhen}}" />
+        </StackPanel>
+
+        <!-- Actions -->
+        <Border Grid.Row="4"
+                Margin="0,16,0,0"
+                Padding="20,12"
+                Background="{DynamicResource AppSurface}"
+                BorderBrush="{DynamicResource AppStroke}"
+                BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" MinWidth="88" MinHeight="36" IsCancel="True" />
+                <Button Style="{StaticResource PrimaryButton}"
+                        Content="Use this match"
+                        MinWidth="136"
+                        Margin="8,0,0,0"
+                        IsDefault="True"
+                        IsEnabled="{Binding CanApply}"
+                        Click="OnApply" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

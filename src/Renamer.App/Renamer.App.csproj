@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Renamer</AssemblyName>
+    <RootNamespace>Renamer.App</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>Renamer</Product>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Renamer.Core\Renamer.Core.csproj" />
+  </ItemGroup>
+</Project>

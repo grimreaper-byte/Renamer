@@ -1,0 +1,13 @@
+# Build output. These folders hold full paths from the PC they were built on, and can be rebuilt anytime.
+bin/
+obj/
+TestResults/
+
+# The built app is shared as a download on the Releases page rather than kept in the code.
+dist/
+
+# Editor and per-user settings
+.vs/
+.vscode/
+*.user
+*.suo

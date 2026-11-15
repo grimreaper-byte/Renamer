@@ -1,0 +1,51 @@
+<UserControl x:Class="Renamer.App.Views.TitleBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root"
+             Height="40">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <ContentControl Template="{StaticResource AppLogo}"
+                        Width="20"
+                        Height="20"
+                        Margin="12,0,10,0"
+                        Focusable="False"
+                        IsTabStop="False" />
+
+        <TextBlock x:Name="TitleText"
+                   Grid.Column="1"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   Margin="0,0,12,0"
+                   Text="{Binding Title, ElementName=Root}" />
+
+        <!-- Holds the menu on the main window. Empty space here still drags the window. -->
+        <ContentPresenter Grid.Column="2"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Content="{Binding Slot, ElementName=Root}" />
+
+        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top">
+            <Button x:Name="MinimizeButton"
+                    Style="{StaticResource CaptionButton}"
+                    Content="&#xE921;"
+                    AutomationProperties.Name="Minimize"
+                    Click="OnMinimize" />
+            <Button x:Name="MaximizeButton"
+                    Style="{StaticResource CaptionButton}"
+                    Content="&#xE922;"
+                    AutomationProperties.Name="Maximize"
+                    Click="OnMaximize" />
+            <Button Style="{StaticResource CaptionCloseButton}"
+                    Content="&#xE8BB;"
+                    AutomationProperties.Name="Close"
+                    Click="OnClose" />
+        </StackPanel>
+    </Grid>
+</UserControl>

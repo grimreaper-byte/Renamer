@@ -1,0 +1,44 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Surfaces, from the window outwards -->
+    <SolidColorBrush x:Key="AppBackground" Color="#FF101217" />
+    <SolidColorBrush x:Key="AppSurface" Color="#FF171A20" />
+    <SolidColorBrush x:Key="AppSurfaceRaised" Color="#FF1F232B" />
+    <SolidColorBrush x:Key="AppHover" Color="#FF282D37" />
+    <SolidColorBrush x:Key="AppPressed" Color="#FF313743" />
+    <SolidColorBrush x:Key="AppPopup" Color="#FF20242C" />
+
+    <!-- Lines -->
+    <SolidColorBrush x:Key="AppStroke" Color="#FF292E38" />
+    <SolidColorBrush x:Key="AppStrokeStrong" Color="#FF434A58" />
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="AppText" Color="#FFECEEF2" />
+    <SolidColorBrush x:Key="AppTextMuted" Color="#FFA3ABB8" />
+    <SolidColorBrush x:Key="AppTextFaint" Color="#FF7E8796" />
+
+    <!-- Brand -->
+    <SolidColorBrush x:Key="AppAccent" Color="#FF4568F2" />
+    <SolidColorBrush x:Key="AppAccentHover" Color="#FF5577F5" />
+    <SolidColorBrush x:Key="AppAccentPressed" Color="#FF3B5CE0" />
+    <SolidColorBrush x:Key="AppAccentSoft" Color="#264C6EF5" />
+    <SolidColorBrush x:Key="AppAccentText" Color="#FF93A8FF" />
+    <SolidColorBrush x:Key="AppOnAccent" Color="#FFFFFFFF" />
+
+    <!-- Rows -->
+    <SolidColorBrush x:Key="AppRowHover" Color="#0CFFFFFF" />
+    <SolidColorBrush x:Key="AppRowSelected" Color="#2E4C6EF5" />
+
+    <!-- Status -->
+    <SolidColorBrush x:Key="AppSuccess" Color="#FF45D792" />
+    <SolidColorBrush x:Key="AppSuccessSoft" Color="#1F45D792" />
+    <SolidColorBrush x:Key="AppWarning" Color="#FFF3BC4C" />
+    <SolidColorBrush x:Key="AppWarningSoft" Color="#1FF3BC4C" />
+    <SolidColorBrush x:Key="AppDanger" Color="#FFFF7B7B" />
+    <SolidColorBrush x:Key="AppDangerSoft" Color="#1FFF7B7B" />
+    <SolidColorBrush x:Key="AppInfo" Color="#FF7DB2FF" />
+    <SolidColorBrush x:Key="AppInfoSoft" Color="#1F7DB2FF" />
+    <SolidColorBrush x:Key="AppNeutralSoft" Color="#14FFFFFF" />
+
+</ResourceDictionary>

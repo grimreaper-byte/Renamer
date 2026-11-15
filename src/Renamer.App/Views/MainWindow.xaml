@@ -1,0 +1,403 @@
+<Window x:Class="Renamer.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Renamer.App.Views"
+        Style="{StaticResource AppWindow}"
+        Title="Renamer"
+        Width="1240"
+        Height="780"
+        MinWidth="1140"
+        MinHeight="520"
+        WindowStartupLocation="CenterScreen"
+        AllowDrop="True"
+        PreviewDragEnter="OnDragOver"
+        PreviewDragOver="OnDragOver"
+        PreviewDragLeave="OnDragLeave"
+        PreviewDrop="OnDrop"
+        PreviewKeyDown="OnPreviewKeyDown">
+    <!-- Progress also fills the app's taskbar button, for when the window is behind others. -->
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo ProgressState="{Binding TaskbarState}" ProgressValue="{Binding TaskbarProgress}" />
+    </Window.TaskbarItemInfo>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <views:TitleBar Grid.Row="0" Title="Renamer">
+            <views:TitleBar.Slot>
+                <Menu>
+                    <MenuItem Header="_File">
+                        <MenuItem Header="Add _files…" InputGestureText="Ctrl+O" Click="OnAddFiles" />
+                        <MenuItem Header="Add f_older…" InputGestureText="Ctrl+Shift+O" Click="OnAddFolder" />
+                        <Separator />
+                        <MenuItem Header="E_xit" Click="OnExit" />
+                    </MenuItem>
+                    <MenuItem Header="_Edit">
+                        <MenuItem Header="Look up on TMDB" InputGestureText="F5" Command="{Binding MatchCommand}" />
+                        <MenuItem Header="Change match…" InputGestureText="Ctrl+M" Click="OnChangeMatch" IsEnabled="{Binding HasSelection}" />
+                        <Separator />
+                        <MenuItem Header="{Binding UndoLabel}" InputGestureText="Ctrl+Z" Command="{Binding UndoCommand}" />
+                        <Separator />
+                        <MenuItem Header="Remove selected" InputGestureText="Del" Click="OnRemoveSelected" IsEnabled="{Binding HasSelection}" />
+                        <MenuItem Header="Remove renamed files" Command="{Binding RemoveRenamedCommand}" />
+                        <MenuItem Header="Clear list" Command="{Binding ClearCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Settings">
+                        <MenuItem Header="TMDB API key…" Tag="0" Click="OnOpenSettings" InputGestureText="Ctrl+," />
+                        <MenuItem Header="Naming format…" Tag="1" Click="OnOpenSettings" />
+                        <MenuItem Header="Filename regex…" Tag="2" Click="OnOpenSettings" />
+                        <MenuItem Header="Regex clean-up rules…" Tag="3" Click="OnOpenSettings" />
+                        <MenuItem Header="Files and subtitles…" Tag="4" Click="OnOpenSettings" />
+                        <Separator />
+                        <MenuItem Header="Appearance…" Tag="5" Click="OnOpenSettings" />
+                    </MenuItem>
+                    <MenuItem Header="_Help">
+                        <MenuItem Header="About Renamer" Click="OnAbout" />
+                    </MenuItem>
+                </Menu>
+            </views:TitleBar.Slot>
+        </views:TitleBar>
+
+        <!-- Command bar -->
+        <DockPanel Grid.Row="1" Margin="16,6,16,12" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                <Button Tag="&#xE8E5;" Content="Add files" ToolTip="Add video files (Ctrl+O)" Click="OnAddFiles" />
+                <Button Tag="&#xE8F4;" Content="Add folder" Margin="8,0,0,0" ToolTip="Add every video in a folder (Ctrl+Shift+O)" Click="OnAddFolder" />
+                <Border Width="1" Margin="12,6" Background="{DynamicResource AppStroke}" />
+                <Button Style="{StaticResource GhostButton}"
+                        Tag="&#xE721;"
+                        Content="Look up"
+                        ToolTip="Look up files that have no match yet (F5)"
+                        Command="{Binding MatchCommand}" />
+                <Button Style="{StaticResource GhostButton}"
+                        Tag="&#xE70F;"
+                        Content="Change match"
+                        ToolTip="Pick the right movie or show for the selected file (Ctrl+M)"
+                        Click="OnChangeMatch"
+                        IsEnabled="{Binding HasSelection}" />
+                <Button Style="{StaticResource GhostButton}"
+                        Tag="&#xE711;"
+                        Content="Remove"
+                        ToolTip="Take the selected files off the list. Nothing is deleted (Del)"
+                        Click="OnRemoveSelected"
+                        IsEnabled="{Binding HasSelection}" />
+                <Button Style="{StaticResource GhostButton}"
+                        Tag="&#xE75C;"
+                        Content="Clear list"
+                        ToolTip="Take every file off the list. Nothing is deleted"
+                        Command="{Binding ClearCommand}" />
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <TextBlock Text="Format" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox Width="150"
+                          AutomationProperties.Name="Format"
+                          ItemsSource="{Binding PresetNames}"
+                          SelectedItem="{Binding SelectedPreset}"
+                          ToolTip="Naming style for new names. Edit the templates in Settings." />
+                <TextBlock Text="Destination" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="16,0,8,0" />
+                <ComboBox Width="160"
+                          AutomationProperties.Name="Destination"
+                          SelectedIndex="{Binding DestinationIndex}"
+                          ToolTip="Rename where they are, or move into your library folders.">
+                    <ComboBoxItem Content="Rename in place" />
+                    <ComboBoxItem Content="Move to library" />
+                </ComboBox>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Alert strip -->
+        <Border Grid.Row="2"
+                Margin="16,0,16,12"
+                Padding="14,8,8,8"
+                CornerRadius="9"
+                Background="{DynamicResource AppWarningSoft}"
+                Visibility="{Binding HasAlert, Converter={StaticResource VisibleWhen}}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource GhostButton}"
+                        Content="Open Settings"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource AppWarning}"
+                        Click="OnAlertAction" />
+                <TextBlock Style="{StaticResource Glyph}" Text="&#xE7BA;" Foreground="{DynamicResource AppWarning}" Margin="0,0,10,0" />
+                <TextBlock Text="{Binding Alert}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </DockPanel>
+        </Border>
+
+        <!-- List -->
+        <Grid Grid.Row="3" Margin="16,0,16,14">
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasItems, Converter={StaticResource VisibleWhen}}">
+                <DataGrid x:Name="Files"
+                          ItemsSource="{Binding Items}"
+                          SelectionMode="Extended"
+                          RowHeight="54"
+                          SelectionChanged="OnSelectionChanged"
+                          MouseDoubleClick="OnRowDoubleClick"
+                          PreviewMouseRightButtonDown="OnRowRightClick">
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Change match…" Click="OnChangeMatch" />
+                            <MenuItem Header="Open containing folder" Click="OnOpenFolder" />
+                            <Separator />
+                            <MenuItem Header="Remove from list" Click="OnRemoveSelected" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="46" CanUserResize="False" CanUserSort="False">
+                            <DataGridTemplateColumn.Header>
+                                <CheckBox Margin="8,0,0,0"
+                                          ToolTip="Tick or untick everything that can be renamed"
+                                          AutomationProperties.Name="Tick all"
+                                          IsChecked="{Binding DataContext.IsCheckedAll, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox Margin="8,0,0,0"
+                                              HorizontalAlignment="Left"
+                                              AutomationProperties.Name="Include in rename"
+                                              IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}"
+                                              IsEnabled="{Binding CanRename}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="34" CanUserResize="False" SortMemberPath="KindLabel">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid Background="Transparent" ToolTip="{Binding KindLabel}">
+                                        <TextBlock Style="{StaticResource Glyph}"
+                                                   Text="{Binding KindGlyph}"
+                                                   FontSize="15"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource AppTextFaint}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="Current name" Width="*" SortMemberPath="FileName">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Background="Transparent" ToolTip="{Binding CurrentTooltip}">
+                                        <TextBlock Text="{Binding FileName}" Foreground="{DynamicResource AppTextMuted}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding FolderShort}" Style="{StaticResource Caption}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="34" CanUserResize="False" CanUserSort="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource Glyph}"
+                                               Text="&#xE72A;"
+                                               FontSize="11"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource AppTextFaint}"
+                                               Visibility="{Binding NewName, Converter={StaticResource VisibleWhen}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="New name" Width="*" SortMemberPath="NewName">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Background="Transparent" ToolTip="{Binding NewNameTooltip}">
+                                        <TextBlock Text="{Binding NewName}"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,0,0,2"
+                                                   Visibility="{Binding NewName, Converter={StaticResource VisibleWhen}}" />
+                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource DetailText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="Status" Width="136" CanUserResize="False" SortMemberPath="Status">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource StatusBadge}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource StatusGlyph}" Text="{Binding StatusGlyph}">
+                                                <TextBlock.RenderTransform>
+                                                    <RotateTransform />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Shown until something has been added -->
+            <Grid Visibility="{Binding HasItems, Converter={StaticResource VisibleWhen}, ConverterParameter=invert}">
+                <Border Style="{StaticResource Card}" BorderThickness="0" />
+                <Rectangle RadiusX="10"
+                           RadiusY="10"
+                           StrokeThickness="1.5"
+                           StrokeDashArray="5 4"
+                           Stroke="{DynamicResource AppStrokeStrong}"
+                           SnapsToDevicePixels="True" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+                    <Border Width="72"
+                            Height="72"
+                            CornerRadius="20"
+                            HorizontalAlignment="Center"
+                            Background="{DynamicResource AppAccentSoft}">
+                        <TextBlock Style="{StaticResource Glyph}"
+                                   Text="&#xE896;"
+                                   FontSize="30"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource AppAccentText}" />
+                    </Border>
+                    <TextBlock Text="Drop movies, episodes or folders here"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Margin="0,20,0,8"
+                               TextAlignment="Center" />
+                    <TextBlock Style="{StaticResource Muted}"
+                               Text="Each file is matched on TMDB, and you see every new name before anything changes."
+                               TextAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Tag="&#xE8E5;" Content="Add files" Click="OnAddFiles" />
+                        <Button Tag="&#xE8F4;" Content="Add folder" MinHeight="36" Margin="10,0,0,0" Click="OnAddFolder" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Footer -->
+        <Grid Grid.Row="4">
+            <Border Background="{DynamicResource AppSurface}"
+                    BorderBrush="{DynamicResource AppStroke}"
+                    BorderThickness="0,1,0,0"
+                    Padding="18,12,16,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <!-- While renaming, moving, undoing or looking up -->
+                    <Grid VerticalAlignment="Center" Visibility="{Binding IsProgressVisible, Converter={StaticResource VisibleWhen}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Text="{Binding ProgressPercent}" FontWeight="SemiBold" Margin="16,0,0,0" />
+                        <ProgressBar Grid.Row="1"
+                                     Grid.ColumnSpan="2"
+                                     Margin="0,7,0,0"
+                                     Maximum="100"
+                                     AutomationProperties.Name="Progress"
+                                     Value="{Binding Progress, Mode=OneWay}" />
+                        <TextBlock Grid.Row="2"
+                                   Grid.ColumnSpan="2"
+                                   Margin="0,6,0,0"
+                                   Text="{Binding ProgressDetail}"
+                                   Style="{StaticResource Caption}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding ProgressDetail, Converter={StaticResource VisibleWhen}}" />
+                    </Grid>
+
+                    <StackPanel VerticalAlignment="Center" Visibility="{Binding IsProgressVisible, Converter={StaticResource VisibleWhen}, ConverterParameter=invert}">
+                        <ItemsControl ItemsSource="{Binding Chips}"
+                                      Margin="0,0,0,3"
+                                      Focusable="False"
+                                      Visibility="{Binding HasItems, Converter={StaticResource VisibleWhen}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                                        <Ellipse x:Name="Dot" Width="8" Height="8" Margin="0,0,7,0" Fill="{DynamicResource AppTextFaint}" />
+                                        <TextBlock Text="{Binding Text}" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Tone}" Value="Good">
+                                            <Setter TargetName="Dot" Property="Fill" Value="{DynamicResource AppSuccess}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Tone}" Value="Warn">
+                                            <Setter TargetName="Dot" Property="Fill" Value="{DynamicResource AppWarning}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Tone}" Value="Bad">
+                                            <Setter TargetName="Dot" Property="Fill" Value="{DynamicResource AppDanger}" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding StatusText}"
+                                   Style="{StaticResource Caption}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding StatusText, Converter={StaticResource VisibleWhen}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0">
+                        <Button Content="Stop"
+                                MinHeight="36"
+                                Margin="0,0,8,0"
+                                Tag="&#xE71A;"
+                                Command="{Binding StopCommand}"
+                                Visibility="{Binding IsBusy, Converter={StaticResource VisibleWhen}}" />
+                        <Button Style="{StaticResource GhostButton}"
+                                MinHeight="36"
+                                Margin="0,0,8,0"
+                                Tag="&#xE7A7;"
+                                Content="Undo"
+                                ToolTip="{Binding UndoLabel}"
+                                Command="{Binding UndoCommand}" />
+                        <Button Style="{StaticResource PrimaryButton}"
+                                MinWidth="168"
+                                Command="{Binding RenameCommand}"
+                                Content="{Binding RenameLabel}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Shown while something is dragged over the window. Ignores the mouse so it never
+             takes the drag away from the window underneath. -->
+        <Grid Grid.Row="1"
+              Grid.RowSpan="4"
+              IsHitTestVisible="False"
+              Background="{DynamicResource AppBackground}"
+              Visibility="{Binding IsDragging, Converter={StaticResource VisibleWhen}}">
+            <Rectangle Margin="16,6,16,16"
+                       RadiusX="12"
+                       RadiusY="12"
+                       StrokeThickness="2"
+                       StrokeDashArray="5 4"
+                       Stroke="{DynamicResource AppAccentText}"
+                       SnapsToDevicePixels="True" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Width="72" Height="72" CornerRadius="20" Background="{DynamicResource AppAccentSoft}">
+                    <TextBlock Style="{StaticResource Glyph}"
+                               Text="&#xE896;"
+                               FontSize="30"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource AppAccentText}" />
+                </Border>
+                <TextBlock Text="Drop to add to the list" FontSize="20" FontWeight="SemiBold" Margin="0,18,0,0" TextAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
